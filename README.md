@@ -1,44 +1,36 @@
-# Bot2
-import telebot
-from config import TOKEN, keys
-from extensions import ConvertionException, Converter
-import traceback
+import json
+import requests
+from config import exchanges
+
+class ConvertionException(Exception):
+    pass
 
 
-bot = telebot.TeleBot(TOKEN)
+class Converter:
+    @staticmethod
+    def get_price(base, quote, amount):
+        try:
+            base_key = exchanges[base.lower()]
+        except KeyError:
+            raise ConvertionException(f"Валюта не найдена! {base}")
 
+        try:
+            quote_key = exchanges[quote.lower()]
+        except KeyError:
+            raise ConvertionException(f"Валюта не найдена! {quote}")
 
-@bot.message_handler(commands=['start', 'help'])
-def help(message: telebot.types.Message):
-    text = 'Чтобы начать работу, введите команду боту в следующем формате: \n Имя валюты, цену которой, хотите узнать'\
-           'Имя валюты, в которой надо узнать цену первой валюты' \
-           'Количество первой валюты' \
-           'Увидеть список доступных валют: /values'
-    bot.reply_to(message, text)
-
-
-@bot.message_handler(commands=['values'])
-def values(message: telebot.types.Message):
-    text = 'Доступные валюты:'
-    for i in keys.keys():
-        text = '\n'.join((text, i))
-        bot.reply_to(message, text)
+        if base_key == sym_key:
+            raise ConvertionException(f'Невозможно перевести одинаковые валюты {base}!')
         
-@bot.message_handler(content_types=['text'])
-def convert(message: telebot.types.Message):
-    values = message.text.split(' ')
-    try:
-        if len(values) != 3:
-            raise ConvertionException('Неверное количество параметров!')
+        try:
+            amount = float(amount)
+        except ValueError:
+            raise ConvertionException(f'Не удалось обработать количество {amount}!')
         
-        answer = Converter.get_price(*values)
-    except ConvertionException as e:
-        bot.reply_to(message, f"Ошибка пользователя!:\n{e}" )
-    except Exception as e:
-        traceback.print_tb(e.__traceback__)
-        bot.reply_to(message, f"Не удалось обработать команду!:\n{e}" )
-    else:
-        bot.reply_to(message,answer)
-
-bot.polling()
+        r = requests.get(f"https://api.exchangeratesapi.io/latest?base={base_key}&symbols={quote_key}")
+        resp = json.loads(r.content)
+        new_price = resp['rates'][quote_key] * amount
+        new_price = round(new_price, 3)
+        message =  f"Цена {amount} {base} в {quote} : {new_price}"
+        return message
 
