@@ -1,6 +1,6 @@
 # Bot2
 import telebot
-from config import TOKEN, keys
+from config import TOKEN, exchanges
 from extensions import ConvertionException, Converter
 import traceback
 
@@ -20,7 +20,7 @@ def help(message: telebot.types.Message):
 @bot.message_handler(commands=['values'])
 def values(message: telebot.types.Message):
     text = 'Доступные валюты:'
-    for i in keys.keys():
+    for i in exchanges.keys():
         text = '\n'.join((text, i))
         bot.reply_to(message, text)
         
