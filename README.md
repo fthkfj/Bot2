@@ -1,36 +1,7 @@
-import json
-import requests
-from config import exchanges
+TOKEN = '5199674082:AAGm5OuyF9CDc8m64B-OJOe32kqapdut_iM'
 
-class ConvertionException(Exception):
-    pass
-
-
-class Converter:
-    @staticmethod
-    def get_price(base, quote, amount):
-        try:
-            base_key = exchanges[base.lower()]
-        except KeyError:
-            raise ConvertionException(f"Валюта не найдена! {base}")
-
-        try:
-            quote_key = exchanges[quote.lower()]
-        except KeyError:
-            raise ConvertionException(f"Валюта не найдена! {quote}")
-
-        if base_key == sym_key:
-            raise ConvertionException(f'Невозможно перевести одинаковые валюты {base}!')
-        
-        try:
-            amount = float(amount)
-        except ValueError:
-            raise ConvertionException(f'Не удалось обработать количество {amount}!')
-        
-        r = requests.get(f"https://api.exchangeratesapi.io/latest?base={base_key}&symbols={quote_key}")
-        resp = json.loads(r.content)
-        new_price = resp['rates'][quote_key] * amount
-        new_price = round(new_price, 3)
-        message =  f"Цена {amount} {base} в {quote} : {new_price}"
-        return message
-
+exchanges = {
+    'Доллар': 'USD',
+    'Евро': 'EUR',
+    'Рубль': 'RUB'
+}
